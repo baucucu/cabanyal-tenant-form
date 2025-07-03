@@ -44,7 +44,6 @@ export function RegistrationForm({ registerUser, tenant }) {
     });
 
     const result = await registerUser(formData);
-    // console.log({ received: result });
     if (result.errors) {
       // Handle errors
       Object.entries(result.errors).forEach(([key, value]) => {
@@ -55,13 +54,25 @@ export function RegistrationForm({ registerUser, tenant }) {
         });
       });
     } else {
-      // Handle success
-      console.log({ received: result });
+      // Send webhook to n8n
+      try {
+        const data = Object.fromEntries(formData.entries());
+        const fileUrls = uploads.map((file) => file.url);
+        await fetch("/api/forward-to-n8n", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            fileUrls,
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to send webhook to n8n", err);
+      }
       toast({
         title: "Success",
         description: result.message,
       });
-      // formRef.current?.reset();
       router.push("/thankyou");
     }
   }
