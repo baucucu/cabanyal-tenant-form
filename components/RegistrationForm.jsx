@@ -14,8 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { PickerOverlay } from "filestack-react";
 import UploadsList from "@/components/UploadsList";
+import { FileUploaderRegular } from '@uploadcare/react-uploader/next';
+import '@uploadcare/react-uploader/core.css';
 
 export function RegistrationForm({ registerUser, tenant }) {
   const formRef = useRef(null);
@@ -24,7 +25,6 @@ export function RegistrationForm({ registerUser, tenant }) {
   const router = useRouter();
   // console.log({ tenant });
 
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [uploads, setUploads] = useState([]);
 
   useEffect(() => {
@@ -147,29 +147,25 @@ export function RegistrationForm({ registerUser, tenant }) {
               />
             </div>
             <div className="space-y-2">
-              <Button
-                variant="secondary"
-                onClick={() => setPickerOpen(true)}
-                type="button"
-              >
-                Add files
-              </Button>
-
+              <FileUploaderRegular
+                useCloudImageEditor={false}
+                sourceList="local, camera, gdrive"
+                filesViewMode="grid"
+                classNameUploader="uc-light"
+                pubkey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBKEY}
+                onCommonUploadSuccess={(e) => {
+                  const uploadedFiles = e.successEntries.map((entry) => ({
+                    url: entry.cdnUrl,
+                    filename: entry.fileInfo?.name,
+                    handle: entry.uuid || entry.fileInfo?.uuid || entry.cdnUrl
+                  }));
+                  setUploads((prev) => [...prev, ...uploadedFiles]);
+                }}
+              />
               <UploadsList
                 uploads={uploads}
                 handleUploadDelete={handleUploadDelete}
               />
-              {pickerOpen && (
-                <PickerOverlay
-                  apikey={process.env.NEXT_PUBLIC_FILESTACK_API_KEY}
-                  pickerOptions={{}}
-                  onUploadDone={(res) => {
-                    console.log(res);
-                    setUploads([...uploads, ...res.filesUploaded]);
-                    setPickerOpen(false);
-                  }}
-                />
-              )}
             </div>
           </div>
         </CardContent>
